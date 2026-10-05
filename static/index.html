@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f6f8fb">
+  <title>Stock Simple</title>
+  <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <a class="brand" href="/" aria-label="Stock Simple inicio">
+        <span class="brand-mark">S</span><span>stock<span class="brand-light">simple</span></span>
+      </a>
+      <div class="nav-label">GESTIÓN</div>
+      <button class="nav-item active" id="nav-inventory"><span class="nav-icon">▦</span> Inventario</button>
+      <button class="nav-item" id="nav-movements"><span class="nav-icon">↗</span> Movimientos</button>
+      <div class="sidebar-bottom"><span class="status-dot"></span> Base de datos local</div>
+    </aside>
+
+    <main class="main-content">
+      <header class="topbar">
+        <div><div class="eyebrow">PANEL DE CONTROL</div><h1>Inventario</h1></div>
+        <button class="button button-primary" id="add-product"><span class="plus">＋</span> Nuevo producto</button>
+      </header>
+
+      <section class="stats-grid" aria-label="Resumen de inventario">
+        <article class="stat-card"><div class="stat-label">Productos</div><div class="stat-value" id="stat-products">—</div><div class="stat-caption">productos registrados</div><span class="stat-icon icon-blue">▦</span></article>
+        <article class="stat-card"><div class="stat-label">Unidades en stock</div><div class="stat-value" id="stat-units">—</div><div class="stat-caption">unidades disponibles</div><span class="stat-icon icon-green">▤</span></article>
+        <article class="stat-card clickable" id="low-stock-card" title="Mostrar productos con poco stock"><div class="stat-label">Stock bajo</div><div class="stat-value" id="stat-low">—</div><div class="stat-caption">en el mínimo o por debajo</div><span class="stat-icon icon-amber">!</span></article>
+        <article class="stat-card"><div class="stat-label">Valor del inventario</div><div class="stat-value stat-money" id="stat-value">—</div><div class="stat-caption">según costo unitario</div><span class="stat-icon icon-purple">$</span></article>
+      </section>
+
+      <section class="panel inventory-panel">
+        <div class="panel-heading">
+          <div><h2>Productos</h2><p>Administrá tus artículos y niveles de stock</p></div>
+          <div class="toolbar"><label class="search-box"><span>⌕</span><input id="search" type="search" placeholder="Buscar producto o SKU…" autocomplete="off"></label><button id="clear-filter" class="button button-quiet hidden">Ver todos</button></div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>PRODUCTO</th><th>CATEGORÍA</th><th>SKU</th><th>PRECIO</th><th>STOCK</th><th>ESTADO</th><th></th></tr></thead>
+            <tbody id="products-table"><tr><td colspan="7" class="loading-cell">Cargando inventario…</td></tr></tbody>
+          </table>
+        </div>
+        <div class="table-footer"><span id="product-count">0 productos</span><span>Los cambios se guardan automáticamente</span></div>
+      </section>
+
+      <section class="panel movement-panel" id="movement-section">
+        <div class="panel-heading movement-heading"><div><h2>Movimientos recientes</h2><p>Últimas entradas y salidas registradas</p></div><span class="live-tag"><span class="status-dot"></span> Actualizado</span></div>
+        <div id="movements-list" class="movement-list"><div class="empty-state">Todavía no hay movimientos.</div></div>
+      </section>
+      <footer>Stock Simple <span>·</span> Inventario local</footer>
+    </main>
+  </div>
+
+  <dialog id="product-dialog" class="dialog">
+    <form id="product-form" class="dialog-form">
+      <div class="dialog-heading"><div><div class="eyebrow">PRODUCTO</div><h2 id="product-dialog-title">Nuevo producto</h2></div><button type="button" class="close-button" data-close="product-dialog" aria-label="Cerrar">×</button></div>
+      <input type="hidden" id="product-id">
+      <label>Nombre<input name="name" required maxlength="120" placeholder="Ej. Yerba mate 1 kg"></label>
+      <div class="form-row"><label>SKU / Código<input name="sku" required maxlength="40" placeholder="YER-001"></label><label>Categoría<input name="category" maxlength="80" placeholder="Almacén"></label></div>
+      <div class="form-row"><label>Precio unitario<input name="price" type="number" min="0" step="0.01" value="0" required></label><label>Stock mínimo<input name="min_stock" type="number" min="0" step="1" value="5" required></label></div>
+      <label id="initial-stock-label">Stock inicial<input name="stock" type="number" min="0" step="1" value="0" required></label>
+      <div class="dialog-actions"><button type="button" class="button button-quiet" data-close="product-dialog">Cancelar</button><button class="button button-primary" type="submit" id="save-product">Guardar producto</button></div>
+    </form>
+  </dialog>
+
+  <dialog id="movement-dialog" class="dialog dialog-small">
+    <form id="movement-form" class="dialog-form">
+      <div class="dialog-heading"><div><div class="eyebrow">ACTUALIZAR EXISTENCIAS</div><h2>Movimiento de stock</h2><p id="movement-product-name" class="dialog-subtitle"></p></div><button type="button" class="close-button" data-close="movement-dialog" aria-label="Cerrar">×</button></div>
+      <input type="hidden" id="movement-product-id">
+      <label>Tipo de movimiento<select name="kind"><option value="entrada">Entrada · sumar stock</option><option value="salida">Salida · restar stock</option></select></label>
+      <label>Cantidad<input name="quantity" type="number" min="1" step="1" required value="1"></label>
+      <label>Nota <span class="optional">(opcional)</span><input name="note" maxlength="200" placeholder="Compra, venta, ajuste…"></label>
+      <div class="dialog-actions"><button type="button" class="button button-quiet" data-close="movement-dialog">Cancelar</button><button class="button button-primary" type="submit">Registrar movimiento</button></div>
+    </form>
+  </dialog>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <script src="/static/app.js"></script>
+</body>
+</html>
